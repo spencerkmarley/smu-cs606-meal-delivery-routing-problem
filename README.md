@@ -1,1 +1,1 @@
-# smu-cs606-meal-delivery-routing-problem
+# SMU CS606 Meal Delivery Routing Problem
