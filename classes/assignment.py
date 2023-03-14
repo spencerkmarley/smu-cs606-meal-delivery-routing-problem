@@ -60,9 +60,9 @@ class Assignment():
         Check if there no orders will take x or more minutes to be ready
         '''
 
-        for o in self.route.bundle:
-            route_ready_time = self.route.bundle.get_ready_time()
-            if route_ready_time - o.ready_time >= x:
-                return False
+        for o in self.route.bundle: # loop through all orders in the bundle
+            route_ready_time = self.route.bundle.get_ready_time() # get the ready time of the route
+            if route_ready_time - o.ready_time >= x: # if the ready time of the route is x or more minutes later than the ready time of the order:
+                return False # return False
         
-        return True
+        return True # else return True
