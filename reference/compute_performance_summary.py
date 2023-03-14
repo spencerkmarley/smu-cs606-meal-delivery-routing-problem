@@ -19,7 +19,7 @@ Example call:
 folder_default=os.path.join(os.path.curdir,'test_sampling_orders')
 
 # some methods defined on their own for clarity
-def traveltime(origin_id,destination_id,meters_per_minute,locations):
+def travel_time(origin_id,destination_id,meters_per_minute,locations):
     dist=np.sqrt((locations.at[destination_id,'x']-locations.at[origin_id,'x'])**2\
                 +(locations.at[destination_id,'y']-locations.at[origin_id,'y'])**2)
     tt=np.ceil(dist/meters_per_minute)
@@ -271,7 +271,7 @@ def compute_performance_summary(instance_dir,input_dir,output_dir):
                 violations1.append((d,a[1],courier_timeline[d].places[-1]))
             courier_timeline[d].times.append(a[0])
             courier_timeline[d].places.append('')
-            tt=traveltime(a[1],a[2],meters_per_minute,locations)
+            tt=travel_time(a[1],a[2],meters_per_minute,locations)
             courier_timeline[d].times.append(a[0]+tt)
             courier_timeline[d].places.append(a[2])
             time_driving[d]+=tt

@@ -31,7 +31,7 @@ class DeliveryRouting:
         self.delta_u = 10
 
 
-    def traveltime(self, origin_id,destination_id):
+    def travel_time(self, origin_id,destination_id):
         dist=np.sqrt((self.locations.at[destination_id,'x']-self.locations.at[origin_id,'x'])**2\
                     +(self.locations.at[destination_id,'y']-self.locations.at[origin_id,'y'])**2)
         tt=np.ceil(dist/self.meters_per_minute)
@@ -93,7 +93,7 @@ class DeliveryRouting:
         # calculate courier's arrival time to the bundle's restaurant:
         arrival_time = courier.next_available_time +\
                         self.dropoff_service_minutes/2 +\
-                         self.traveltime(courier.position_after_last_assignment,route.restaurant_id) +\
+                         self.travel_time(courier.position_after_last_assignment,route.restaurant_id) +\
                           self.pickup_service_minutes/2
         route_ready_time = route.get_ready_time()
         ### Commitment strategy

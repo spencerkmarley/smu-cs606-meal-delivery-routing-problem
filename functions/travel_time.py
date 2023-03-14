@@ -1,6 +1,6 @@
 import numpy as np
 
-def traveltime(origin_id, destination_id, meters_per_minute, locations):
+def travel_time(origin_id, destination_id, meters_per_minute, locations):
     '''
     Calculate travel time between two points, the origin and the destination
     '''

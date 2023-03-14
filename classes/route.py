@@ -1,4 +1,4 @@
-from functions.traveltime import traveltime
+from functions.travel_time import travel_time
 
 # Import the config file
 from config import *
@@ -43,7 +43,7 @@ class Route(object):
             total_travel_time = 0 # initiate total travel time
             
             for i in range(len(travel_points)-1): # loop through all travel points except the first one
-                total_travel_time += traveltime(travel_points[i], travel_points[i+1], meters_per_minute, locations) # add the travel time between the current travel point and the next travel point to the total travel time
+                total_travel_time += travel_time(travel_points[i], travel_points[i+1], meters_per_minute, locations) # add the travel time between the current travel point and the next travel point to the total travel time
             
             return total_travel_time # return the total travel time
 
@@ -70,7 +70,7 @@ class Route(object):
             arrival_time_at_cp = self.get_ready_time() # initiate arrival time at customer place
 
             for i in range(len(travel_points)-1): # loop through all travel points except the first one
-                arrival_time_at_cp += (traveltime(travel_points[i], travel_points[i+1], meters_per_minute, locations)) # add the travel time between the current travel point and the next travel point to the arrival time at customer place
+                arrival_time_at_cp += (travel_time(travel_points[i], travel_points[i+1], meters_per_minute, locations)) # add the travel time between the current travel point and the next travel point to the arrival time at customer place
                 total_service_delay += (arrival_time_at_cp - self.bundle[i].ready_time) # add the service delay of the current order to the total service delay
                 
                 return total_service_delay
@@ -89,7 +89,7 @@ class Route(object):
             arrival_time_at_cp = self.get_ready_time() # initiate arrival time at customer place
 
             for i in range(len(travel_points)-1): # loop through all travel points except the first one
-                arrival_time_at_cp += (traveltime(travel_points[i], travel_points[i+1], meters_per_minute, locations)) # add the travel time between the current travel point and the next travel point to the arrival time at customer place
+                arrival_time_at_cp += (travel_time(travel_points[i], travel_points[i+1], meters_per_minute, locations)) # add the travel time between the current travel point and the next travel point to the arrival time at customer place
                 total_service_waiting += (arrival_time_at_cp - self.bundle[i].placement_time) # add the service waiting of the current order to the total service waiting
                 
                 return total_service_waiting
