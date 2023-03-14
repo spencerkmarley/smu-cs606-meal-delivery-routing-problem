@@ -16,4 +16,4 @@ class Courier(object):
         # Sequence of moves of the courier, updated and derived along the way:
         self.assignments = [] # list of order assignments
         self.next_available_time = self.on_time # the next time the courier is available
-        self.position_after_last_assignment = (self.x, self.y) # the position of the courier after the last assignment
+        self.position_after_last_assignment = self.id # the position of the courier after the last assignment

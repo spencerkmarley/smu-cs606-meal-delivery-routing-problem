@@ -28,20 +28,24 @@ class Route(object):
         
         return ready_time
 
+    def get_total_travel_time(self, meters_per_minute, locations):
+        '''
+        Calculate the total travel time of the route from the 1st destination to the last destination
+        - do not include pickup service time and drop off service time
+        '''
 
+        travel_points = [self.restaurant_id] + [o.id for o in self.bundle] # list of travel points
 
-
-    # calculate total travel time from 1st destination to the last destination of the route
-    # do not include pickup service time and drop off service time
-    def get_total_travel_time(self,meters_per_minute,locations):
-        travel_points = [self.restaurant_id]+ [o.id for o in self.bundle]
-        if len(travel_points) == 1:
-            return 0
-        else:
-            total_travel_time = 0
-            for i in range(len(travel_points)-1):
-                total_travel_time += traveltime(travel_points[i], travel_points[i+1],meters_per_minute,locations)
-            return total_travel_time
+        if len(travel_points) == 1: # if there is only one travel point
+            return 0 # return 0
+        
+        else: # if there are more than one travel points
+            total_travel_time = 0 # initiate total travel time
+            
+            for i in range(len(travel_points)-1): # loop through all travel points except the first one
+                total_travel_time += traveltime(travel_points[i], travel_points[i+1], meters_per_minute, locations) # add the travel time between the current travel point and the next travel point to the total travel time
+            
+            return total_travel_time # return the total travel time
 
     def get_end_position(self, meters_per_minute, locations):
         return self.bundle[-1].id
