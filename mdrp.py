@@ -1,8 +1,9 @@
 import argparse
 import json
 
-from functions.read_instance_information import read_instance_information
-from functions.procedure1 import procedure1
+from functions.read_instance_information import *
+from functions.procedure1 import *
+from functions.analysis import *
 
 from config import *
 f = F
@@ -21,8 +22,9 @@ if __name__ == '__main__':
             target_click_to_door, pay_per_order,\
             guaranteed_pay_per_hour=read_instance_information(instance_dir)
     
-    final_result = str(procedure1(instance_dir))
-    obj = json.loads(json.dumps(final_result, indent=4))
+    dr, final_result = procedure1(instance_dir)
+    obj = json.loads(json.dumps(str(final_result), indent=4))
     with open(str(instance_dir) + '/final_result.json', 'w') as f:
         f.write(obj)
 
+    orders_list(dr, final_result, orders, locations)

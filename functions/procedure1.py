@@ -15,4 +15,4 @@ def procedure1(instance_dir):
         final_result[t] = list_of_routes_by_restaurant
     final_result = {k:v for k,v in final_result.items() if len(v)>0}
 
-    return final_result 
+    return dr, final_result 
