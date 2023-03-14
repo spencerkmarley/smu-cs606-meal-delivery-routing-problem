@@ -1,11 +1,7 @@
 import argparse
-import os, math, numpy as np
-import pandas as pd
-import copy
-from collections import defaultdict
 
-import classes as cls
 from functions.read_instance_information import read_instance_information
+from functions.procedure1 import procedure1
 
 from config import *
 f = F
@@ -24,4 +20,4 @@ if __name__ == '__main__':
             target_click_to_door, pay_per_order,\
             guaranteed_pay_per_hour=read_instance_information(instance_dir)
     
-    
+    procedure1(instance_dir)
