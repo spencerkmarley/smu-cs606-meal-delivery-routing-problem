@@ -1,17 +1,30 @@
 from functions.traveltime import traveltime
 
+# Import the config file
+from config import *
+f = F
+delta_u = DELTA_U
+beta = BETA
+gamma = GAMMA
+
 class Route(object):
-    def __init__(self,bundle : list, restaurant_id : str): 
-        self.bundle = bundle 
-        self.restaurant_id = restaurant_id
+    def __init__(self,bundle:list, restaurant_id:str): 
+        
+        self.bundle = bundle # list of orders
+        self.restaurant_id = restaurant_id # restaurant id
         
         # Hyperparameters
-        self.beta = 5 
-        self.gamma = 10
+        self.beta = beta
+        self.gamma = gamma
         
     def get_ready_time(self):
-        ready_time = max([o.ready_time for o in self.bundle])
+        
+        ready_time = max([o.ready_time for o in self.bundle]) # ready time of the bundle
+        
         return ready_time
+
+
+
 
     # calculate total travel time from 1st destination to the last destination of the route
     # do not include pickup service time and drop off service time

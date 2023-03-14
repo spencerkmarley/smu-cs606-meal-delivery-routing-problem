@@ -5,6 +5,7 @@ from functions.read_instance_information import *
 from functions.procedure1 import *
 from functions.analysis import *
 
+# Import the config file
 from config import *
 f = F
 delta_u = DELTA_U
