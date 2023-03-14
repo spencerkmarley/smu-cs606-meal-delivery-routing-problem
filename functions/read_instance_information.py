@@ -1,12 +1,15 @@
 import os
 import pandas as pd
 
-# Read instance information
 def read_instance_information(instance_dir):
-    orders=pd.read_table(os.path.join(instance_dir,'orders.txt'))
-    restaurants=pd.read_table(os.path.join(instance_dir,'restaurants.txt'))
-    couriers=pd.read_table(os.path.join(instance_dir,'couriers.txt'))
-    instanceparams=pd.read_table(os.path.join(instance_dir,'instance_parameters.txt'))
+    '''
+    Read instance information from the instance directory
+    '''
+
+    orders=pd.read_table(os.path.join(instance_dir,'orders.txt')) # read orders
+    restaurants=pd.read_table(os.path.join(instance_dir,'restaurants.txt')) # read restaurants
+    couriers=pd.read_table(os.path.join(instance_dir,'couriers.txt')) # read couriers
+    instanceparams=pd.read_table(os.path.join(instance_dir,'instance_parameters.txt')) # read instance parameters
 
     order_locations=pd.DataFrame(data=[orders.order,orders.x,orders.y]).transpose()
     order_locations.columns=['id','x','y']

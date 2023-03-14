@@ -47,6 +47,9 @@ class Route(object):
             
             return total_travel_time # return the total travel time
 
+
+
+
     def get_end_position(self, meters_per_minute, locations):
         return self.bundle[-1].id
 
@@ -79,11 +82,22 @@ class Route(object):
                 total_service_waiting += (arrival_time_at_cp - self.bundle[i].placement_time)
                 return total_service_waiting
 
-    # calculate route efficiency: travel time per order:
-    def route_efficiency(self,meters_per_minute,locations):
-        return len(self.bundle) / self.get_total_travel_time(meters_per_minute,locations)
+    def route_efficiency(self, meters_per_minute, locations):
+        '''
+        Calculate the route efficiency, orders per travel time
+        '''
+        
+        # route efficiency = number of orders / total travel time
+        route_efficiency = len(self.bundle) / self.get_total_travel_time(meters_per_minute, locations)
+        
+        return route_efficiency
 
-    # calculate route cost
-    def get_route_cost(self,meters_per_minute,locations):
-        route_cost = self.get_total_travel_time(meters_per_minute,locations) + self.beta * self.get_total_service_delay(meters_per_minute,locations) + self.gamma * self.get_total_service_waiting(meters_per_minute,locations)
+    def get_route_cost(self, meters_per_minute, locations):
+        '''
+        Calculate the route cost
+        '''
+        
+        # route cost = total travel time + beta * total service delay + gamma * total service waiting
+        route_cost = self.get_total_travel_time(meters_per_minute, locations) + self.beta * self.get_total_service_delay(meters_per_minute, locations) + self.gamma * self.get_total_service_waiting(meters_per_minute, locations)
+        
         return route_cost
