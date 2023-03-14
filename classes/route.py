@@ -1,4 +1,4 @@
-from functions import traveltime
+from functions.traveltime import traveltime
 
 class Route(object):
     def __init__(self,bundle : list, restaurant_id : str): 

@@ -5,7 +5,7 @@ from classes.assignment import Assignment
 from classes.courier import Courier
 from classes.order import Order
 from classes.route import Route
-from functions import read_instance_information
+from functions.read_instance_information import read_instance_information
 
 class DeliveryRouting:
     def __init__(self, instance_dir : str):
