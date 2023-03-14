@@ -2,24 +2,29 @@ from functions.traveltime import traveltime
 
 # Import the config file
 from config import *
-f = F
-delta_u = DELTA_U
 beta = BETA
 gamma = GAMMA
 
 class Route(object):
-    def __init__(self,bundle:list, restaurant_id:str): 
+    '''
+    Route class
+    '''
+    def __init__(self,bundle:list, restaurant_id:str):
+        '''
+        Initialize a route
+        '''
         
         self.bundle = bundle # list of orders
         self.restaurant_id = restaurant_id # restaurant id
-        
-        # Hyperparameters
-        self.beta = beta
-        self.gamma = gamma
+        self.beta = beta # controls the freshness in the construction of bundles, should be tuned
+        self.gamma = gamma # controls the click-to-door time in the construction of bundles, should be tuned
         
     def get_ready_time(self):
+        '''
+        Get the ready time of the route
+        '''
         
-        ready_time = max([o.ready_time for o in self.bundle]) # ready time of the bundle
+        ready_time = max([o.ready_time for o in self.bundle]) # ready time of the route is the latest ready time of the orders in the route's bundle
         
         return ready_time
 
@@ -38,7 +43,7 @@ class Route(object):
                 total_travel_time += traveltime(travel_points[i], travel_points[i+1],meters_per_minute,locations)
             return total_travel_time
 
-    def get_end_position(self,meters_per_minute,locations):
+    def get_end_position(self, meters_per_minute, locations):
         return self.bundle[-1].id
 
     # calculate total service delay 

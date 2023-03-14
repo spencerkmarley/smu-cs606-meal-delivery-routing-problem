@@ -1,5 +1,12 @@
 class Order:
+    '''
+    Order class
+    '''
+
     def __init__(self, order_information:dict):
+        '''
+        Initialize an order
+        '''
 
         self.id = order_information.get('order') # order id
         self.destination = (order_information.get('x'), order_information.get('y')) # order location
