@@ -18,6 +18,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--instance_dir', type=str, default='0o50t75s1p100')
     args = parser.parse_args()
+    file_name = str(args.instance_dir)
     instance_dir = 'data/' + str(args.instance_dir)
 
     # Read instance information
@@ -30,4 +31,4 @@ if __name__ == '__main__':
     with open(str(instance_dir) + '/final_result.json', 'w') as f:
         f.write(obj) # write the final result to a json file
 
-    orders_list(dr, final_result, orders, locations) # analyze the final result
+    orders_list(dr, final_result, orders, locations, file_name, instance_dir) # analyze the final result

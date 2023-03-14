@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from classes.deliveryrouting import DeliveryRouting
 
-def orders_list(dr: DeliveryRouting, final_result, orders, locations):
+def orders_list(dr: DeliveryRouting, final_result, orders, locations, file_name, instance_dir):
     print('Number of orders:', len(dr.orders))
     print('Number of orders in horizon list:', sum([len(v) for v in dr.orders_by_horizon_interval.values()]))
     orders_in_initilization = 0
@@ -44,6 +44,8 @@ def orders_list(dr: DeliveryRouting, final_result, orders, locations):
     for i, txt in enumerate(lable):
         plt.annotate(txt, (x[i], y[i]))
     plt.scatter(x, y)
-    plt.show()
+    
+    plt.savefig('./{}/{}-scatter.png'.format(instance_dir, file_name))
+    plt.close()
 
     return None
