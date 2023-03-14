@@ -47,11 +47,14 @@ class Route(object):
             
             return total_travel_time # return the total travel time
 
+    def get_end_position(self):
+        '''
+        Get the end position of the route
+        '''
 
+        end_position = self.bundle[-1].id # end position of the route is the last order in the route's bundle
 
-
-    def get_end_position(self, meters_per_minute, locations):
-        return self.bundle[-1].id
+        return end_position
 
     # calculate total service delay 
     # service delay = arrival_time at customer place - ready time (ignoring pickup service time and dropoff service time)
