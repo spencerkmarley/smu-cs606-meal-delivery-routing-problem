@@ -56,33 +56,42 @@ class Route(object):
 
         return end_position
 
-    # calculate total service delay 
-    # service delay = arrival_time at customer place - ready time (ignoring pickup service time and dropoff service time)
-    def get_total_service_delay(self,meters_per_minute,locations):
-        travel_points = [self.restaurant_id]+ [o.id for o in self.bundle]
-        if len(travel_points) == 1:
-            return 0
+    def get_total_service_delay(self, meters_per_minute, locations):
+        '''
+        Calculate the total service delay of the route
+        '''
+        
+        travel_points = [self.restaurant_id]+ [o.id for o in self.bundle] # list of travel points
+        
+        if len(travel_points) == 1: # if there is only one travel point
+            return 0 # return 0
         else:
-            total_service_delay = 0
-            arrival_time_at_cp = self.get_ready_time()
-            for i in range(len(travel_points)-1):
-                arrival_time_at_cp += (traveltime(travel_points[i], travel_points[i+1],meters_per_minute,locations))
-                total_service_delay += (arrival_time_at_cp - self.bundle[i].ready_time)
+            total_service_delay = 0 # initiate total service delay
+            arrival_time_at_cp = self.get_ready_time() # initiate arrival time at customer place
+
+            for i in range(len(travel_points)-1): # loop through all travel points except the first one
+                arrival_time_at_cp += (traveltime(travel_points[i], travel_points[i+1], meters_per_minute, locations)) # add the travel time between the current travel point and the next travel point to the arrival time at customer place
+                total_service_delay += (arrival_time_at_cp - self.bundle[i].ready_time) # add the service delay of the current order to the total service delay
+                
                 return total_service_delay
 
-    # calculate total_click_to_door 
-    # click_to_door = arrival_time at customer place - placement time (ignoring pickup service time and dropoff service time)
-    # the below function implement 
     def get_total_service_waiting(self,meters_per_minute,locations):
-        travel_points = [self.restaurant_id]+[o.id for o in self.bundle]
-        if len(travel_points) == 1:
-            return 0
-        else:
-            total_service_waiting = 0
-            arrival_time_at_cp = self.get_ready_time()
-            for i in range(len(travel_points)-1):
-                arrival_time_at_cp += (traveltime(travel_points[i], travel_points[i+1],meters_per_minute,locations))
-                total_service_waiting += (arrival_time_at_cp - self.bundle[i].placement_time)
+        '''
+        Calculate the total service waiting of the route
+        '''
+        
+        travel_points = [self.restaurant_id]+[o.id for o in self.bundle] # list of travel points
+
+        if len(travel_points) == 1: # if there is only one travel point
+            return 0 # return 0
+        else: # if there are more than one travel points
+            total_service_waiting = 0 # initiate total service waiting
+            arrival_time_at_cp = self.get_ready_time() # initiate arrival time at customer place
+
+            for i in range(len(travel_points)-1): # loop through all travel points except the first one
+                arrival_time_at_cp += (traveltime(travel_points[i], travel_points[i+1], meters_per_minute, locations)) # add the travel time between the current travel point and the next travel point to the arrival time at customer place
+                total_service_waiting += (arrival_time_at_cp - self.bundle[i].placement_time) # add the service waiting of the current order to the total service waiting
+                
                 return total_service_waiting
 
     def route_efficiency(self, meters_per_minute, locations):
