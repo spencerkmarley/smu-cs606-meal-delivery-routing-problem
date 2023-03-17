@@ -1,7 +1,7 @@
 from classes.deliveryrouting import DeliveryRouting
 from collections import defaultdict
 
-def route_deliveries(instance_dir):
+def part1(instance_dir):
 
     dr = DeliveryRouting(instance_dir) # initialize a delivery routing problem
     dr.get_ready_orders() # get the ready orders
