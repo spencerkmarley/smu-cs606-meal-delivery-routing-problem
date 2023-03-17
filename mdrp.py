@@ -3,6 +3,8 @@ import json
 
 from functions.read_instance_information import *
 from functions.part1 import *
+from functions.part2 import *
+from functions.part3 import *
 from functions.analysis import *
 
 # Import the config file
