@@ -21,7 +21,7 @@ class DeliveryRouting:
 
         self.restaurants = restaurants
         self.couriers = [Courier(courier) for courier in couriers.to_dict(orient = 'records')]
-        self.unassigned_orders = self.copy(self.orders)
+        # self.unassigned_orders = self.copy(self.orders)
         
         self.orders_by_horizon_interval = defaultdict(list)
         self.locations = locations
@@ -223,3 +223,6 @@ class DeliveryRouting:
                     list_of_routes_by_restaurant.append(set_of_bundles)
 
             return list_of_routes_by_restaurant
+
+    def objective(self):
+
