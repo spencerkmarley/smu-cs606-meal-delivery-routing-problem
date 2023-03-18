@@ -3,9 +3,10 @@ class Courier(object):
     Courier class
     '''
     def __init__(self, courier_information:dict):
-        '''
-        Initialize a courier
-        '''
+        """
+        Args:
+            courier_information (dict): courier information
+        """
 
         self.id = courier_information.get('courier') # courier id
         self.x = courier_information.get('x') # courier x location
