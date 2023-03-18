@@ -1,6 +1,7 @@
 from collections import defaultdict
 import copy
 import numpy as np
+from typing import Tuple
 from classes.assignment import Assignment
 from classes.courier import Courier
 from classes.order import Order
@@ -31,7 +32,14 @@ class DeliveryRouting:
         self.delta_u = 10
 
 
-    def travel_time(self, origin_id,destination_id):
+    def travel_time(self, origin_id : str, destination_id : Tuple[str, str]) -> int:
+        """
+        Args:
+            origin_id (int): origin location id
+            destination_id (int): destination location id
+        Returns:
+            travel time (int): travel time between origin and destination
+        """
         dist=np.sqrt((self.locations.at[destination_id,'x']-self.locations.at[origin_id,'x'])**2\
                     +(self.locations.at[destination_id,'y']-self.locations.at[origin_id,'y'])**2)
         tt=np.ceil(dist/self.meters_per_minute)
@@ -55,7 +63,7 @@ class DeliveryRouting:
                 if o.placement_time < t_list[i] and o.placement_time >= t_list[i-1] and o.ready_time >= t_list[i]+self.delta_u:
                     self.orders_by_horizon_interval[t_list[i]+self.f*np.ceil((o.ready_time - (t_list[i]+self.delta_u))/self.f)].append(o)
 
-    def get_ready_orders_at_t(self,t):
+    def get_ready_orders_at_t(self, t : int):
         return self.orders_by_horizon_interval[t]
 
     def get_idle_courier_at_t(self,t):
@@ -150,14 +158,27 @@ class DeliveryRouting:
                 courier.assignments.append(assignment)
 
     def initialization(self, t:int, ready_orders: list, idle_couriers: list, bundle_size: int):
+        """
+        Explanation:
+            This function is used to initialize the simulation.
+            It will assign bundles to couriers.
+
+        Args:
+            t: current time
+            ready_orders: list of ready orders
+            idle_couriers: list of idle couriers
+            bundle_size: number of orders in a bundle
+        Returns:
+            list_of_routes_by_restaurant: list of routes by restaurant
+
+        """
+
         list_of_routes_by_restaurant = []
         if not ready_orders:
-            # print('b1')
             return  list_of_routes_by_restaurant
         else:
             # print('b2')
             for r_id in self.restaurants['restaurant']:
-                # print(r_id)
                 
                 # build set of ready orders from restaurant r
                 r_order= []
@@ -225,6 +246,14 @@ class DeliveryRouting:
             return list_of_routes_by_restaurant
 
     def driver_code(self):
+        """
+        Explanation:
+            Main driver code to create bundles
+        Args:
+            None
+        Returns:
+            None
+        """
         final_result = defaultdict(list) # initialize the final result
         self.get_ready_orders() # get the ready orders
         t_list = [*range(0, 24*60+1, self.f)] # get the time horizon
@@ -241,6 +270,16 @@ class DeliveryRouting:
         # return final_result
 
     def objective(self):
+        """
+        Explanation:
+            This function is used to calculate the total cost of the final result.
+
+        Args:
+            None
+
+        Returns:
+            self.total_cost: total cost of the final result
+        """
         self.total_cost = 0
         for time, routes in self.final_result.items():
             for route in routes:
