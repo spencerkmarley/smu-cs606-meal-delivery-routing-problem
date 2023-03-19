@@ -1,3 +1,4 @@
+
 def remove_reinsert(dr: DeliveryRouting, t: int, r: str, meters_per_minute: int, locations: pd.DataFrame):
     U = dr.orders_by_horizon_interval[t][r]  # Get the orders U(t, r) for the given time t and restaurant r
 
