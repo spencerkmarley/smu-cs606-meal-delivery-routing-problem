@@ -2,9 +2,7 @@ import argparse
 import json
 
 from functions.read_instance_information import *
-from functions.part1 import *
-from functions.part2 import *
-from functions.part3 import *
+from functions.main_algo import *
 from functions.analysis import *
 
 # Import the config file
@@ -28,9 +26,12 @@ if __name__ == '__main__':
             target_click_to_door, pay_per_order,\
             guaranteed_pay_per_hour=read_instance_information(instance_dir)
     
-    dr, final_result = part1(instance_dir) # run procedure 1
-    obj = json.loads(json.dumps(str(final_result), indent=4)) # convert the final result to json format
-    with open(str(instance_dir) + '/final_result.json', 'w') as f:
-        f.write(obj) # write the final result to a json file
+    dr = algo(instance_dir) # run the algorithm
 
-    orders_list(dr, final_result, orders, locations, file_name, instance_dir) # analyze the final result
+    # save print results
+
+    # obj = json.loads(json.dumps(str(final_result), indent=4)) # convert the final result to json format
+    # with open(str(instance_dir) + '/final_result.json', 'w') as f:
+    #     f.write(obj) # write the final result to a json file
+
+    

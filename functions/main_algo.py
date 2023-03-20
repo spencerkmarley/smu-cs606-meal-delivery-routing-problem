@@ -7,7 +7,6 @@ def algo(instance_dir):
     dr = DeliveryRouting(instance_dir)  # initialize a delivery routing problem
     dr.get_ready_orders()
     t_list = [*range(0, 24*60+1, dr.f)]
-    final_result = defaultdict(list)
     for t in t_list:
         ready_orders = dr.get_ready_orders_at_t(t)
         idle_couriers = dr.get_idle_courier_at_t(t)
