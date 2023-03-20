@@ -22,7 +22,7 @@ class DeliveryRouting:
 
         self.restaurants = restaurants
         self.couriers = [Courier(courier) for courier in couriers.to_dict(orient = 'records')]
-        # self.unassigned_orders = self.copy(self.orders)
+        self.unassigned_orders = self.copy(self.orders)
         
         self.orders_by_horizon_interval = defaultdict(list)
         self.locations = locations
@@ -32,14 +32,7 @@ class DeliveryRouting:
         self.delta_u = 10
 
 
-    def travel_time(self, origin_id : str, destination_id : Tuple[str, str]) -> int:
-        """
-        Args:
-            origin_id (int): origin location id
-            destination_id (int): destination location id
-        Returns:
-            travel time (int): travel time between origin and destination
-        """
+    def travel_time(self, origin_id,destination_id):
         dist=np.sqrt((self.locations.at[destination_id,'x']-self.locations.at[origin_id,'x'])**2\
                     +(self.locations.at[destination_id,'y']-self.locations.at[origin_id,'y'])**2)
         tt=np.ceil(dist/self.meters_per_minute)
@@ -63,7 +56,7 @@ class DeliveryRouting:
                 if o.placement_time < t_list[i] and o.placement_time >= t_list[i-1] and o.ready_time >= t_list[i]+self.delta_u:
                     self.orders_by_horizon_interval[t_list[i]+self.f*np.ceil((o.ready_time - (t_list[i]+self.delta_u))/self.f)].append(o)
 
-    def get_ready_orders_at_t(self, t : int):
+    def get_ready_orders_at_t(self,t):
         return self.orders_by_horizon_interval[t]
 
     def get_idle_courier_at_t(self,t):
@@ -86,13 +79,13 @@ class DeliveryRouting:
     # check if the courier can take a bundle. 
     def can_assign(self, t, courier, route : Route) -> bool:
         route_ready_time = route.get_ready_time()
-        if route_ready_time < self.on_time:
+        if route_ready_time < courier.on_time:
             return False
-        if route_ready_time> self.off_time:
+        if route_ready_time> courier.off_time:
             return False
-        if len(courier.assignements) > 0:
-            if courier.assignements[-1].isfinal_flag == 0:
-                if courier.assignements[-1].restaurant_id != route.restaurant_id:
+        if len(courier.assignments) > 0:
+            if courier.assignments[-1].isfinal_flag == 0:
+                if courier.assignments[-1].restaurant_id != route.restaurant_id:
                     return False
         return True
 
@@ -104,12 +97,26 @@ class DeliveryRouting:
                          self.travel_time(courier.position_after_last_assignment,route.restaurant_id) +\
                           self.pickup_service_minutes/2
         route_ready_time = route.get_ready_time()
+        pickup_time = max(arrival_time,route_ready_time)
+        assignment = Assignment(t, route.restaurant_id, courier, route)
+        # update order attributes:
+        for i, order in enumerate(route.bundle):
+            order.pickup_time = pickup_time
+            order.courier_id = courier.id
+            if i == 0:
+                order.dropoff_time = pickup_time + self.pickup_service_minutes/2 +\
+                                        self.travel_time(route.restaurant_id,order.id) +\
+                                        self.dropoff_service_minutes/2 
+            else:
+                order.dropoff_time = route.bundle[i-1].dropoff_time +\
+                                        self.dropoff_service_minutes/2 +\
+                                        self.travel_time(route.bundle[i-1].id,order.id) +\
+                                        self.dropoff_service_minutes/2
+
         ### Commitment strategy
         # If d can reach restaurant r before t + f and all orders in s are estimated to be ready by t + f,
         # make a final commitment of d to s: instruct d to travel to rs, pick up and deliver orders in s.
         if arrival_time <= t+self.f and route_ready_time <= t+self.f:
-            pickup_time = max(arrival_time,route.route_ready_time)
-            assignment = Assignment(t, route.restaurant_id, courier, route)
             assignment.isfinal_flag = 1
             assignment.pickup_time = pickup_time
             
@@ -122,21 +129,19 @@ class DeliveryRouting:
                     courier.assignments[-1].pickup_time = max(arrival_time,courier.assignments[-1].route.get_ready_time())
                     courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
                                                     courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +  self.dropoff_service_minutes/2     
-                    courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position()
+                    courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
                 else: # if the last assignment can not be updated
                     courier.assignments.append(assignment)
                     courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
                                                         courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +  self.dropoff_service_minutes/2
-                    courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position()
+                    courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
             else: 
                 courier.assignments.append(assignment)
                 courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
                                                         courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations)+  self.dropoff_service_minutes/2
-                courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position()
+                courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
         
         else:
-            pickup_time = max(arrival_time,route_ready_time)
-            assignment = Assignment(t, route.restaurant_id, courier, route)
             assignment.isfinal_flag = 0
             assignment.pickup_time = pickup_time
             if len(courier.assignments) > 0:
@@ -149,7 +154,7 @@ class DeliveryRouting:
                     if courier.assignments[-1].isfinal_flag == 1:
                         courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
                                                         courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +  self.dropoff_service_minutes/2
-                        courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position()
+                        courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
                     else:
                         pass
                 else: # if the last assignment can not be updated
@@ -158,27 +163,14 @@ class DeliveryRouting:
                 courier.assignments.append(assignment)
 
     def initialization(self, t:int, ready_orders: list, idle_couriers: list, bundle_size: int):
-        """
-        Explanation:
-            This function is used to initialize the simulation.
-            It will assign bundles to couriers.
-
-        Args:
-            t: current time
-            ready_orders: list of ready orders
-            idle_couriers: list of idle couriers
-            bundle_size: number of orders in a bundle
-        Returns:
-            list_of_routes_by_restaurant: list of routes by restaurant
-
-        """
-
         list_of_routes_by_restaurant = []
         if not ready_orders:
+            # print('b1')
             return  list_of_routes_by_restaurant
         else:
             # print('b2')
             for r_id in self.restaurants['restaurant']:
+                # print(r_id)
                 
                 # build set of ready orders from restaurant r
                 r_order= []
@@ -243,46 +235,66 @@ class DeliveryRouting:
                 if set_of_bundles:
                     list_of_routes_by_restaurant.append(set_of_bundles)
 
-            return list_of_routes_by_restaurant
+            return list_of_routes_by_restaurant 
+    
 
-    def driver_code(self):
-        """
-        Explanation:
-            Main driver code to create bundles
-        Args:
-            None
-        Returns:
-            None
-        """
-        final_result = defaultdict(list) # initialize the final result
-        self.get_ready_orders() # get the ready orders
-        t_list = [*range(0, 24*60+1, self.f)] # get the time horizon
+    #### Local Search ####
+    def get_restaurant_cost(self, res:list): 
+        res_cost = 0
+        for route in res:
+            res_cost += route.get_route_cost(self.meters_per_minute,self.locations)
+        return res_cost
+    
+    def get_total_restaurant_cost(self, list_of_routes_by_restaurant:list): 
+        total_res_cost = 0
+        for res in list_of_routes_by_restaurant:
+            for route in res:
+                total_res_cost += route.get_route_cost(self.meters_per_minute,self.locations)
+        return total_res_cost
 
-        for t in t_list: # loop through the time horizon
-            ready_orders = self.get_ready_orders_at_t(t) # get the ready orders at time t
-            idle_couriers = self.get_idle_courier_at_t(t) # get the idle couriers at time t
-            bundle_size = int(self.get_bundle_size(t)) # get the bundle size at time t
-            list_of_routes_by_restaurant = self.initialization(t, ready_orders, idle_couriers, bundle_size) # get the list of routes by restaurant
-            final_result[t] = list_of_routes_by_restaurant # add the list of routes by restaurant to the final result
+    def local_search(self, list_of_routes_by_restaurant):
+        # get current total cost: 
+        current_total_res_cost = self.get_total_restaurant_cost(list_of_routes_by_restaurant)
 
-        final_result = {k:v for k,v in final_result.items() if len(v)>0} # remove the empty time slots
-        self.final_result = final_result
-        # return final_result
+        # perform local search
+        for res in list_of_routes_by_restaurant:
+            # cur = [o.id for route in res for o in route.bundle]
+            # if len(cur)>1:
+            #     print('Cur:', cur)
+            # get current route cost
+            current_cost = self.get_restaurant_cost(res)
+            for route1 in res:
+                for i in range(len(route1.bundle)):
+                    best_route = route1
+                    best_pos = i
+                    # remove order at position i
+                    o = route1.bundle.pop(i)
+                    # find the best route and position to reinsert order o
+                    for route2 in res:
+                        for j in range(len(route2.bundle)+1):
+                            # insert order at position j
+                            route2.bundle.insert(j,o)
+                            # try_c = [o.id for route in res for o in route.bundle]
+                            # if len(try_c)>1:
+                            #     print('Try:', try_c)
+                            # get new cost
+                            new_cost = self.get_restaurant_cost(res)
+                            # if new cost is less than current cost then record the new position
+                            if new_cost < current_cost:
+                                current_cost = new_cost
+                                best_route = route2
+                                best_pos = j
 
-    def objective(self):
-        """
-        Explanation:
-            This function is used to calculate the total cost of the final result.
-
-        Args:
-            None
-
-        Returns:
-            self.total_cost: total cost of the final result
-        """
-        self.total_cost = 0
-        for time, routes in self.final_result.items():
-            for route in routes:
-                for bundle in route:
-                    self.total_cost += bundle.get_route_cost(self.meters_per_minute,self.locations)
-        return self.total_cost
+                            route2.bundle.pop(j)
+                    # insert order at best position
+                    best_route.bundle.insert(best_pos,o)
+        # delete route has no orders
+        for res_index in range(len(list_of_routes_by_restaurant)):
+            list_of_routes_by_restaurant[res_index] = [route for route in list_of_routes_by_restaurant[res_index] if  len(route.bundle)!= 0]
+             
+        # get new total cost
+        new_total_res_cost = self.get_total_restaurant_cost(list_of_routes_by_restaurant)
+        # if new_total_res_cost != current_total_res_cost:
+        #     print('Old cost: ', current_total_res_cost)
+        #     print('New cost: ', new_total_res_cost)
+        return list_of_routes_by_restaurant
