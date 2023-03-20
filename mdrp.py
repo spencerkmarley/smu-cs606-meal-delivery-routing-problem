@@ -19,7 +19,8 @@ if __name__ == '__main__':
     parser.add_argument('--instance_dir', type=str, default='0o50t75s1p100')
     args = parser.parse_args()
     file_name = str(args.instance_dir)
-    instance_dir = 'data/' + str(args.instance_dir)
+    #instance_dir = 'data/' + str(args.instance_dir)
+    instance_dir = 'C:\\Users\\Asus\\OneDrive\\Documents\\GitHub\\smu-cs606-meal-delivery-routing-problem\\data\\' + str(args.instance_dir)
 
     # Read instance information
     orders,restaurants,couriers,instanceparams,locations, meters_per_minute, pickup_service_minutes, dropoff_service_minutes, \
@@ -27,6 +28,7 @@ if __name__ == '__main__':
             guaranteed_pay_per_hour=read_instance_information(instance_dir)
     
     dr = algo(instance_dir) # run the algorithm
+    print('Running...')
 
     # save print results
 
