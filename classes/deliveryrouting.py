@@ -252,6 +252,30 @@ class DeliveryRouting:
                 total_res_cost += route.get_route_cost(self.meters_per_minute,self.locations)
         return total_res_cost
 
+    def driver_code(self):
+        final_result = defaultdict(list) # initialize the final result
+        self.get_ready_orders() # get the ready orders
+        t_list = [*range(0, 24*60+1, self.f)] # get the time horizon
+
+        for t in t_list: # loop through the time horizon
+            ready_orders = self.get_ready_orders_at_t(t) # get the ready orders at time t
+            idle_couriers = self.get_idle_courier_at_t(t) # get the idle couriers at time t
+            bundle_size = int(self.get_bundle_size(t)) # get the bundle size at time t
+            list_of_routes_by_restaurant = self.initialization(t, ready_orders, idle_couriers, bundle_size) # get the list of routes by restaurant
+            final_result[t] = list_of_routes_by_restaurant # add the list of routes by restaurant to the final result
+
+        final_result = {k:v for k,v in final_result.items() if len(v)>0} # remove the empty time slots
+        self.final_result = final_result
+        # return final_result
+
+    def objective(self):
+        self.total_cost = 0
+        for time, routes in self.final_result.items():
+            for route in routes:
+                for bundle in route:
+                    self.total_cost += bundle.get_route_cost(self.meters_per_minute,self.locations)
+        return self.total_cost
+
     def local_search(self, list_of_routes_by_restaurant):
         # get current total cost: 
         current_total_res_cost = self.get_total_restaurant_cost(list_of_routes_by_restaurant)
