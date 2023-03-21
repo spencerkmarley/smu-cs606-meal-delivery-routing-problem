@@ -1,36 +1,36 @@
-number of orders delivered: 1035 out of 1362
-total payment: 10586.25
-proportion of couriers receiving minimum guaranteed compensation: 0.19
+number of orders delivered: 1134 out of 1362
+total payment: 11474.50
+proportion of couriers receiving minimum guaranteed compensation: 0.12
 
 
        click-to-door  ready-to-door  ready-to-pickup  click-to-door overage
-count        1035.00        1035.00          1035.00                1035.00
-mean           46.04          24.91            11.86                  10.98
-std            21.00          15.60            11.38                  16.96
+count        1134.00        1134.00          1134.00                1134.00
+mean           43.93          23.10            10.18                   9.59
+std            20.65          14.65            10.42                  16.29
 min            13.00           5.00             0.00                   0.00
-10%            24.00           9.00             0.00                   0.00
-50%            41.00          20.00             9.00                   1.00
-90%            73.00          49.00            30.00                  33.00
-max           169.00          92.00            59.00                 129.00
+10%            22.00           8.00             0.00                   0.00
+50%            40.00          19.00             7.00                   0.00
+90%            70.00          45.00            27.00                  30.00
+max           205.00          84.00            51.00                 165.00
 
 
        orders_per_hour  bundles_per_hour  utilization  guaranteed_earnings  order_earnings  payment
 count           173.00            173.00       173.00               173.00          173.00   173.00
-mean              1.78              1.25         0.56                48.71           59.83    61.19
-std               0.48              0.32         0.11                14.07           24.12    22.50
+mean              1.98              1.41         0.59                48.71           65.55    66.33
+std               0.55              0.35         0.15                14.07           25.02    23.98
 min               0.00              0.00         0.00                 1.75            0.00     1.75
-10%               1.32              1.00         0.47                30.00           30.00    30.75
-50%               1.75              1.30         0.58                45.00           60.00    60.00
-90%               2.28              1.50         0.67                60.00           90.00    90.00
-max               3.00              2.00         0.77                86.25          140.00   140.00
+10%               1.35              1.00         0.46                30.00           30.00    34.50
+50%               2.00              1.50         0.60                45.00           70.00    70.00
+90%               2.67              1.75         0.72                60.00           90.00    90.00
+max               3.38              2.73         1.41                86.25          140.00   140.00
 
 
        orders_per_bundle
-count             715.00
-mean                1.45
-std                 0.78
+count             807.00
+mean                1.41
+std                 0.74
 min                 1.00
 10%                 1.00
 50%                 1.00
 90%                 2.00
-max                 7.00
+max                 6.00
