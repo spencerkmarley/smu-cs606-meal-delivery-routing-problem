@@ -8,6 +8,11 @@ from classes.order import Order
 from classes.route import Route
 from functions.read_instance_information import read_instance_information
 
+# Import the config file
+from config import *
+f_minute = F_MINUTE
+commitment_strategy = COMMITMENT_STRATEGY
+
 class DeliveryRouting:
     def __init__(self, instance_dir:str):
         '''
@@ -131,36 +136,48 @@ class DeliveryRouting:
         
         return True # otherwise the courier can take the bundle
 
-    # assign a bundle to a courier
-    def assign_bundle(self, t: int, courier: Courier, route: Route):
-        # calculate courier's arrival time to the bundle's restaurant:
-        arrival_time = courier.next_available_time +\
+    def assign_bundle(self, t:int, courier:Courier, route:Route):
+        '''
+        Assign a bundle to a courier
+        '''
+
+        arrival_time = max(t, courier.next_available_time) +\
                         self.dropoff_service_minutes/2 +\
-                         self.travel_time(courier.position_after_last_assignment,route.restaurant_id) +\
-                          self.pickup_service_minutes/2
-        route_ready_time = route.get_ready_time()
-        pickup_time = max(arrival_time,route_ready_time)
-        assignment = Assignment(t, route.restaurant_id, courier, route)
-        # update order attributes:
-        for i, order in enumerate(route.bundle):
-            order.pickup_time = pickup_time
-            order.courier_id = courier.id
-            if i == 0:
+                         self.travel_time(courier.position_after_last_assignment, route.restaurant_id) +\
+                          self.pickup_service_minutes/2 # calculate the arrival time of the courier to the bundle's restaurant as the maximum of the current time and the courier's next available time plus the dropoff service time divided by 2, the travel time to the restaurant, and the pickup service time divided by 2
+
+        route_ready_time = route.get_ready_time() # get the ready time of the bundle
+        pickup_time = max(arrival_time, route_ready_time) # calculate the pickup time as the maximum of the arrival time and the ready time of the bundle
+        assignment = Assignment(t, route.restaurant_id, courier, route) # create an assignment object
+        
+        assignment.pickup_time = pickup_time # set the pickup time of the assignment to the pickup time calculated above
+        assignment.departure_time = max(t, courier.next_available_time) + self.dropoff_service_minutes/2 # set the departure time of the assignment to the maximum of the current time and the courier's next available time plus the dropoff service time divided by 2
+        assignment.departure_location = courier.position_after_last_assignment # set the departure location of the assignment to the courier's position after the last assignment
+        
+        for i, order in enumerate(route.bundle): # loop through each order in the bundle
+            order.pickup_time = pickup_time # set the pickup time of the order to the pickup time calculated above
+            order.assign_time = t # set the assign time of the order to the current time
+            order.courier_id = courier.id # set the courier id of the order to the courier's id
+            
+            if i == 0: # if the order is the first order in the bundle
                 order.dropoff_time = pickup_time + self.pickup_service_minutes/2 +\
-                                        self.travel_time(route.restaurant_id,order.id) +\
-                                        self.dropoff_service_minutes/2 
-            else:
+                                        self.travel_time(route.restaurant_id, order.id) +\
+                                        self.dropoff_service_minutes/2 # set the dropoff time of the order to the pickup time plus the pickup service time divided by 2 plus the travel time from the restaurant to the order, and the dropoff service time divided by 2 
+            else: # if the order is not the first order in the bundle
                 order.dropoff_time = route.bundle[i-1].dropoff_time +\
                                         self.dropoff_service_minutes/2 +\
-                                        self.travel_time(route.bundle[i-1].id,order.id) +\
-                                        self.dropoff_service_minutes/2
+                                        self.travel_time(route.bundle[i-1].id, order.id) +\
+                                        self.dropoff_service_minutes/2 # set the dropoff time of the order to the dropoff time of the previous order plus the dropoff service time divided by 2 plus the travel time from the previous order to the current order, and the dropoff service time divided by 2
 
-        ### Commitment strategy
-        # If d can reach restaurant r before t + f and all orders in s are estimated to be ready by t + f,
-        # make a final commitment of d to s: instruct d to travel to rs, pick up and deliver orders in s.
-        if arrival_time <= t+self.f and route_ready_time <= t+self.f:
+        ## Commitment strategy
+        # If the courier, c, can reach the restaurant, r, before time t + f, and all orders in the bundle, b, are estimated to be ready by t + f,
+        # Then make a final commitment of the courier to the bundle - instruct the courer to travel to the restaurant, pick up and deliver the orders in the bundle.
+
+        if (arrival_time <= t + f_minute and route_ready_time <= t + f_minute) or\
+           (route_ready_time <= t + f_minute and route_ready_time <= arrival_time): # if the arrival time is before the current time plus f minutes and the ready time of the bundle is before the current time plus f minutes or the ready time of the bundle is before the arrival time
+            
+            
             assignment.isfinal_flag = 1
-            assignment.pickup_time = pickup_time
             
             if len(courier.assignments) > 0:
                 # if the last assignment can be updated
@@ -170,22 +187,44 @@ class DeliveryRouting:
                     courier.assignments[-1].update(assignment,self.meters_per_minute,self.locations) # the old courier.assignments[-1] is combined with the new assignment to become new courier.assignments[-1]
                     courier.assignments[-1].pickup_time = max(arrival_time,courier.assignments[-1].route.get_ready_time())
                     courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
-                                                    courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +  self.dropoff_service_minutes/2     
+                                                    courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +\
+                                                     self.dropoff_service_minutes*(len(courier.assignments[-1].route.bundle)-1) +\
+                                                      self.dropoff_service_minutes/2     
                     courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
+                    # update order attributes:
+                    for i, order in enumerate(courier.assignments[-1].route.bundle):
+                        order.pickup_time = pickup_time
+                        order.courier_id = courier.id
+                        if i == 0:
+                            order.dropoff_time = pickup_time + self.pickup_service_minutes/2 +\
+                                                    self.travel_time(courier.assignments[-1].restaurant_id,order.id) +\
+                                                    self.dropoff_service_minutes/2 
+                        else:
+                            order.dropoff_time = courier.assignments[-1].route.bundle[i-1].dropoff_time +\
+                                                    self.dropoff_service_minutes/2 +\
+                                                    self.travel_time(courier.assignments[-1].route.bundle[i-1].id,order.id) +\
+                                                    self.dropoff_service_minutes/2
                 else: # if the last assignment can not be updated
                     courier.assignments.append(assignment)
                     courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
-                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +  self.dropoff_service_minutes/2
+                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +\
+                                                     self.dropoff_service_minutes*(len(courier.assignments[-1].route.bundle)-1) +\
+                                                      self.dropoff_service_minutes/2
                     courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
             else: 
                 courier.assignments.append(assignment)
                 courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
-                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations)+  self.dropoff_service_minutes/2
+                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +\
+                                                     self.dropoff_service_minutes*(len(courier.assignments[-1].route.bundle)-1) +\
+                                                      self.dropoff_service_minutes/2
                 courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
         
         else:
-            assignment.isfinal_flag = 0
-            assignment.pickup_time = pickup_time
+            if commitment_strategy == 0:
+                assignment.isfinal_flag = 1
+            else:
+                assignment.isfinal_flag = 0
+            
             if len(courier.assignments) > 0:
                 # if the last assignment can be updated
                 # the last assignment can be updated if its isfinal_flag = 0
@@ -195,14 +234,41 @@ class DeliveryRouting:
                     courier.assignments[-1].pickup_time = max(arrival_time,courier.assignments[-1].route.get_ready_time())
                     if courier.assignments[-1].isfinal_flag == 1:
                         courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
-                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +  self.dropoff_service_minutes/2
+                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +\
+                                                     self.dropoff_service_minutes*(len(courier.assignments[-1].route.bundle)-1) +\
+                                                      self.dropoff_service_minutes/2
                         courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
                     else:
                         pass
+                    # update order attributes:
+                    for i, order in enumerate(courier.assignments[-1].route.bundle):
+                        order.pickup_time = pickup_time
+                        order.courier_id = courier.id
+                        if i == 0:
+                            order.dropoff_time = pickup_time + self.pickup_service_minutes/2 +\
+                                                    self.travel_time(courier.assignments[-1].restaurant_id,order.id) +\
+                                                    self.dropoff_service_minutes/2 
+                        else:
+                            order.dropoff_time = courier.assignments[-1].route.bundle[i-1].dropoff_time +\
+                                                    self.dropoff_service_minutes/2 +\
+                                                    self.travel_time(courier.assignments[-1].route.bundle[i-1].id,order.id) +\
+                                                    self.dropoff_service_minutes/2
                 else: # if the last assignment can not be updated
                     courier.assignments.append(assignment)
+                    if courier.assignments[-1].isfinal_flag == 1:
+                        courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
+                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +\
+                                                     self.dropoff_service_minutes*(len(courier.assignments[-1].route.bundle)-1) +\
+                                                      self.dropoff_service_minutes/2
+                        courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
             else: 
                 courier.assignments.append(assignment)
+                if courier.assignments[-1].isfinal_flag == 1:
+                    courier.next_available_time = courier.assignments[-1].pickup_time +  self.pickup_service_minutes/2 +\
+                                                        courier.assignments[-1].route.get_total_travel_time(self.meters_per_minute,self.locations) +\
+                                                     self.dropoff_service_minutes*(len(courier.assignments[-1].route.bundle)-1) +\
+                                                      self.dropoff_service_minutes/2
+                    courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations)
 
     def initialization(self, t:int, ready_orders: list, idle_couriers: list, bundle_size: int):
         list_of_routes_by_restaurant = []
