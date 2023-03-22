@@ -271,78 +271,77 @@ class DeliveryRouting:
                                                     self.dropoff_service_minutes/2 # set the next available time of the courier to the pickup time plus the pickup service time divided by 2 plus the total travel time of the bundle, and the dropoff service time multiplied by the number of orders in the bundle minus 1, and the dropoff service time divided by 2
                     courier.position_after_last_assignment = courier.assignments[-1].route.get_end_position(self.meters_per_minute,self.locations) # set the position after the last assignment of the courier to the end position of the bundle
 
-    def initialization(self, t:int, ready_orders: list, idle_couriers: list, bundle_size: int):
-        list_of_routes_by_restaurant = []
-        if not ready_orders:
-            # print('b1')
-            return  list_of_routes_by_restaurant
-        else:
-            # print('b2')
-            for r_id in self.restaurants['restaurant']:
-                # print(r_id)
+    def initialization(self, t:int, ready_orders:list, idle_couriers:list, bundle_size:int):
+        '''
+        This function is used to initialize the assignment of orders to couriers at the beginning of the simulation.
+        '''
+
+        list_of_routes_by_restaurant = [] # Initiate an empty list of routes by restaurant
+
+        if not ready_orders: # if there are no ready orders
+            return  list_of_routes_by_restaurant # return the empty list of routes by restaurant
+        else: # if there are ready orders
+            for r_id in self.restaurants['restaurant']: # for each restaurant
+                r_order= [] # Initiate an empty list of orders for the restaurant
                 
-                # build set of ready orders from restaurant r
-                r_order= []
-                for o in ready_orders:
-                    if o.restaurant_id == r_id:
-                        r_order.append(o)
-                # print(r_order)
-                # get number of bundel for restaurant r
-                number_of_bundle = int(np.ceil(len(r_order)/bundle_size))
-                # Initiate emptly lists
-                set_of_bundles = [[] for _ in range(number_of_bundle)]
+                for o in ready_orders: # for each order
+                    if o.restaurant_id == r_id: # if the order is from the restaurant
+                        r_order.append(o) # append the order to the list of orders for the restaurant
+                
+                number_of_bundle = int(np.ceil(len(r_order)/bundle_size)) # get the number of bundles for the restaurant by rounding up the number of orders divided by the bundle size
+                set_of_bundles = [[] for _ in range(number_of_bundle)] # Initiate a list of empty bundles for the restaurant
                 
                 # Assign orders into bundels:
-                for o in r_order:
-                    min_cost_increase = float('inf')
-                    for i in range(number_of_bundle):
-                        n = len(set_of_bundles[i])
-                        if n + 1<= bundle_size:
-                            #print('x')
-                            min_route_cost = float('inf')
-                            for pos in range(n+1):
-                                set_of_bundles[i].insert(pos,o)
-                                if Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute,self.locations) < min_route_cost:
-                                    min_route_cost = Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute,self.locations)
-                                    best_pos = pos
-                                set_of_bundles[i].pop(pos)
-                        else: # if existing size + 1 > bundle size and insertion decreases route efficiency then
-                            # Disregard s for order o and finnd the next best route and insertion position
-                            #print('o')
-                            min_route_cost = float('inf')
-                            for pos in range(n+1):
-                                set_of_bundles[i].insert(pos,o)
-                                if Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute,self.locations) < min_route_cost:
-                                    min_route_cost = Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute,self.locations)
-                                    best_pos = pos
-                                set_of_bundles[i].pop(pos)
-                            # get current efficiency
-                            current_efficiency = n / Route(set_of_bundles[i],r_id).get_total_travel_time(self.meters_per_minute,self.locations)
-                            # get new efficiency
-                            set_of_bundles[i].insert(best_pos,o)
-                            new_efficiency = (n+1) / Route(set_of_bundles[i],r_id).get_total_travel_time(self.meters_per_minute,self.locations)
-                            if current_efficiency < new_efficiency:
-                                set_of_bundles[i].pop(best_pos)
-                            else: 
-                                set_of_bundles[i].pop(best_pos)
-                                continue 
+                for o in r_order: # for each order
+                    min_cost_increase = float('inf') # Initiate the minimum cost increase to infinity
 
-                        current_cost = Route(set_of_bundles[i],r_id).get_route_cost(self.meters_per_minute,self.locations)
-                        set_of_bundles[i].insert(best_pos, o)
-                        new_cost = Route(set_of_bundles[i],r_id).get_route_cost(self.meters_per_minute,self.locations)
-                        cost_increase = new_cost - current_cost
-                        if cost_increase < min_cost_increase:
-                            min_cost_increase = cost_increase
-                            best_i = i
-                            best_i_pos = best_pos
-                        set_of_bundles[i].pop(best_pos)
+                    for i in range(number_of_bundle): # for each bundle
+                        n = len(set_of_bundles[i]) # get the number of orders in the bundle
+                        if n + 1<= bundle_size: # if the number of orders in the bundle plus 1 is less than or equal to the bundle size
+                            min_route_cost = float('inf') # Initiate the minimum route cost to infinity
+                            for pos in range(n+1): # for each position in the bundle
+                                set_of_bundles[i].insert(pos, o) # insert the order into the bundle at the position 
+                                if Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute, self.locations) < min_route_cost: # if the route cost of the bundle is less than the minimum route cost
+                                    min_route_cost = Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute, self.locations) # set the minimum route cost to the route cost of the bundle
+                                    best_pos = pos # set the best position to the position
+                                set_of_bundles[i].pop(pos) # remove the order from the bundle at the position  
+                        else: # if the number of orders in the bundle plus 1 is greater than the bundle size
+                            min_route_cost = float('inf') # Initiate the minimum route cost to infinity
+                            
+                            for pos in range(n+1): # for each position in the bundle
+                                set_of_bundles[i].insert(pos,o) # insert the order into the bundle at the position
+                                if Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute, self.locations) < min_route_cost: # if the route cost of the bundle is less than the minimum route cost
+                                    min_route_cost = Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute, self.locations) # set the minimum route cost to the route cost of the bundle
+                                    best_pos = pos # set the best position to the position
+                                set_of_bundles[i].pop(pos) # remove the order from the bundle at the position
+                            
+                            current_efficiency = n/Route(set_of_bundles[i], r_id).get_total_travel_time(self.meters_per_minute, self.locations) # get the current efficiency of the bundle
+                            set_of_bundles[i].insert(best_pos, o) # insert the order into the bundle at the best position
+                            new_efficiency = (n+1)/Route(set_of_bundles[i], r_id).get_total_travel_time(self.meters_per_minute, self.locations) # get the new efficiency of the bundle
 
-                    # Assign o the best bundle and the best position within that bundle
-                    set_of_bundles[best_i].insert(best_i_pos,o)
+                            if current_efficiency < new_efficiency: # if the current efficiency is less than the new efficiency
+                                set_of_bundles[i].pop(best_pos) # remove the order from the bundle at the best position
+                            else: # if the current efficiency is greater than or equal to the new efficiency
+                                set_of_bundles[i].pop(best_pos) # remove the order from the bundle at the best position
+                                continue # continue to the next bundle
+
+                        current_cost = Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute, self.locations) # get the current cost of the bundle
+                        set_of_bundles[i].insert(best_pos, o) # insert the order into the bundle at the best position
+                        new_cost = Route(set_of_bundles[i], r_id).get_route_cost(self.meters_per_minute, self.locations) # get the new cost of the bundle
+                        cost_increase = new_cost - current_cost # get the cost increase of the bundle
+                        
+                        if cost_increase < min_cost_increase: # if the cost increase of the bundle is less than the minimum cost increase
+                            min_cost_increase = cost_increase # set the minimum cost increase to the cost increase of the bundle
+                            best_i = i # set the best bundle to the bundle
+                            best_i_pos = best_pos # set the best position to the best position
+                        set_of_bundles[i].pop(best_pos) # remove the order from the bundle at the best position
+
+                    set_of_bundles[best_i].insert(best_i_pos, o) # insert the order into the best bundle at the best position
                 
-                set_of_bundles = [Route(bundle,r_id) for bundle in set_of_bundles]
-                if set_of_bundles:
-                    list_of_routes_by_restaurant.append(set_of_bundles)
+                set_of_bundles = [Route(bundle, r_id) for bundle in set_of_bundles] # convert the list of bundles into a list of routes
+                
+                if set_of_bundles: # if the list of routes is not empty
+                    list_of_routes_by_restaurant.append(set_of_bundles) # append the list of routes to the list of routes by restaurant
 
             return list_of_routes_by_restaurant 
         
