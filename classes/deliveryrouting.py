@@ -9,27 +9,31 @@ from classes.route import Route
 from functions.read_instance_information import read_instance_information
 
 class DeliveryRouting:
-    def __init__(self, instance_dir : str):
+    def __init__(self, instance_dir:str):
+        '''
+        Initialize a delivery routing problem
+        '''
 
         orders, restaurants, couriers, instanceparams, locations ,\
         self.meters_per_minute, self.pickup_service_minutes, self.dropoff_service_minutes, \
             self.target_click_to_door, self.pay_per_order,\
-            self.guaranteed_pay_per_hour = read_instance_information(instance_dir)
+            self.guaranteed_pay_per_hour = read_instance_information(instance_dir) # read instance information from the instance directory
 
-
-        self.orders = [Order(order) for order in orders.to_dict(orient = 'records')]
-        self.orders = sorted(self.orders, key = lambda x: x.id)
-
-        self.restaurants = restaurants
-        self.couriers = [Courier(courier) for courier in couriers.to_dict(orient = 'records')]
-        self.unassigned_orders = self.copy(self.orders)
-        
+        # Orders
+        self.orders = [Order(order) for order in orders.to_dict(orient = 'records')] # convert orders to Order class
+        self.orders = sorted(self.orders, key = lambda x: x.id) # sort orders by id
+        self.unassigned_orders = self.copy(self.orders) # unassigned orders
         self.orders_by_horizon_interval = defaultdict(list)
+
+        # Restaurants
+        self.restaurants = restaurants # set restaurants in the problem
+        
+        # Couriers
+        self.couriers = [Courier(courier) for courier in couriers.to_dict(orient = 'records')] # convert couriers to Courier class
+        
+        # Locations
         self.locations = locations
 
-        # Hyperparameters
-        self.f = 5
-        self.delta_u = 10
 
 
     def travel_time(self, origin_id,destination_id):
@@ -38,7 +42,10 @@ class DeliveryRouting:
         tt=np.ceil(dist/self.meters_per_minute)
         return tt
 
-    def copy(self,x):
+    def copy(self, x):
+        '''
+        This function is used to copy a list of objects
+        '''
         return copy.deepcopy(x)
 
     def get_ready_orders(self) -> dict:
