@@ -5,3 +5,4 @@ GAMMA = 10 # Control the click-to-door time in the construction of bundles, shou
 OMEGA = 1000 # controlling the undelivered orders
 X = 25 # the number of minutes that is considered a long waiting time
 COMMITMENT_STRATEGY = 0 # 0: no commitment, 1: commitment
+INSTANCE_DIR = './data/5o50t75s1p100'
