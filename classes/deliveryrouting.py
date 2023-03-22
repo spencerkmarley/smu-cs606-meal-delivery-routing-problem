@@ -33,19 +33,30 @@ class DeliveryRouting:
         
         # Locations
         self.locations = locations
+    
 
+    def travel_time(self, origin_id:str, destination_id:str):
+        """
+        Calculate the travel time between two locations.
+        Args:
+            origin_id (int): The id of the origin location.
+            destination_id (int): The id of the destination location.
+        Returns:
+            float: The travel time between the origin and destination in minutes.
+        """
 
-
-    def travel_time(self, origin_id,destination_id):
-        dist=np.sqrt((self.locations.at[destination_id,'x']-self.locations.at[origin_id,'x'])**2\
-                    +(self.locations.at[destination_id,'y']-self.locations.at[origin_id,'y'])**2)
-        tt=np.ceil(dist/self.meters_per_minute)
+        dist = np.sqrt((self.locations.at[destination_id, 'x'] - self.locations.at[origin_id, 'x'])**2\
+                    + (self.locations.at[destination_id, 'y'] - self.locations.at[origin_id, 'y'])**2) # calculate the distance between the origin and the destination
+        
+        tt = np.ceil(dist/self.meters_per_minute) # calculate the travel time between the origin and the destination
+        
         return tt
 
     def copy(self, x):
         '''
         This function is used to copy a list of objects
         '''
+        
         return copy.deepcopy(x)
 
     def get_ready_orders(self) -> dict:
@@ -53,48 +64,72 @@ class DeliveryRouting:
         This function return orders which have ready time fall into the corresponding horizon.
         This function should be run only once.
         '''
-        # starting time of each interval
-        t_list = [*range(0,24*60+1,self.f)]
-        # get ready orders correspoding to each horizon interval
-        for i in range(1,len(t_list)):
-            for o in self.orders:
-                if o.placement_time < t_list[i] and o.placement_time >= t_list[i-1] and o.ready_time < t_list[i]+self.delta_u:
-                    self.orders_by_horizon_interval[t_list[i]].append(o)
-                if o.placement_time < t_list[i] and o.placement_time >= t_list[i-1] and o.ready_time >= t_list[i]+self.delta_u:
-                    self.orders_by_horizon_interval[t_list[i]+self.f*np.ceil((o.ready_time - (t_list[i]+self.delta_u))/self.f)].append(o)
+        t_list = [*range(0, 24*60+1, self.f)] # initiate the starting time of each interval
+        
+        for i in range(1, len(t_list)): # loop through each interval
+            for o in self.orders: # loop through each order
+                if o.placement_time < t_list[i] and o.placement_time >= t_list[i-1] and o.ready_time < t_list[i] + self.delta_u: # if the order placement time is within the interval and the order is ready within the assignemnt horizon
+                    self.orders_by_horizon_interval[t_list[i]].append(o) # append the order to the corresponding horizon
+                if o.placement_time < t_list[i] and o.placement_time >= t_list[i-1] and o.ready_time >= t_list[i] + self.delta_u: # if the order placement time is within the interval but the order is ready after the assignemnt horizon
+                    self.orders_by_horizon_interval[t_list[i] + self.f * np.ceil((o.ready_time - (t_list[i] + self.delta_u))/self.f)].append(o) # append the order to a future horizon in which the order is ready.
 
-    def get_ready_orders_at_t(self,t):
+    def get_ready_orders_at_t(self, t):
+        '''
+        This function return orders which have ready time fall into the corresponding horizon.
+        '''
+
         return self.orders_by_horizon_interval[t]
 
-    def get_idle_courier_at_t(self,t):
-        idle_courier = []
-        for c in self.couriers:
-            if c.next_available_time < t+self.delta_u and c.next_available_time < c.off_time :
-                idle_courier.append(c)
-        return idle_courier
+    def get_idle_courier_at_t(self, t):
+        '''
+        Get idle couriers at time t
+        '''
+        idle_courier = [] # initiate a list of idle couriers
+
+        for c in self.couriers: # loop through each courier
+            if c.next_available_time < t + self.delta_u and c.next_available_time < c.off_time : # if the courier is next available within the assignment horizon and the courier is not off duty
+                idle_courier.append(c) # append the courier to the list of idle couriers
+        return idle_courier # return the list of idle couriers
 
     def get_bundle_size(self, t) -> int :
+        '''
+        Get the bundle size at time t
+        '''
+        number_of_orders = len(self.get_ready_orders_at_t(t)) # get the number of orders ready at time t
+        number_of_couriers = len(self.get_idle_courier_at_t(t)) # get the number of idle couriers at time t
         
-        number_of_orders = len(self.get_ready_orders_at_t(t))
-        number_of_couriers = len(self.get_idle_courier_at_t(t))
-        if number_of_couriers == 0:
+        if number_of_couriers == 0: # if there are no idle couriers
             bundle_size = 2 # default value of bundle size
         else:
-            bundle_size = np.ceil(number_of_orders/number_of_couriers)
-        return bundle_size
+            bundle_size = np.ceil(number_of_orders/number_of_couriers) # otherwise the bundle size is the number of orders divided by the number of idle couriers
+        return bundle_size # return the bundle size
 
-    # check if the courier can take a bundle. 
     def can_assign(self, t, courier, route : Route) -> bool:
-        route_ready_time = route.get_ready_time()
-        if route_ready_time < courier.on_time:
-            return False
-        if route_ready_time> courier.off_time:
-            return False
-        if len(courier.assignments) > 0:
-            if courier.assignments[-1].isfinal_flag == 0:
-                if courier.assignments[-1].restaurant_id != route.restaurant_id:
-                    return False
-        return True
+        '''
+        Check if a courier can take a bundle
+        '''
+
+        route_ready_time = route.get_ready_time() # get the ready time of the bundle
+        
+        if route_ready_time < courier.on_time: # if the ready time of the bundle is before the courier's on duty time
+            return False # the courier cannot take the bundle
+        if route_ready_time> courier.off_time: # if the ready time of the bundle is after the courier's off duty time
+            return False # the courier cannot take the bundle
+        
+        arrival_time = max(t, courier.next_available_time) +\
+                        self.dropoff_service_minutes/2 +\
+                         self.travel_time(courier.position_after_last_assignment, route.restaurant_id) +\
+                          self.pickup_service_minutes/2 # calculate the arrival time of the courier to the bundle's restaurant as the maximum of the current time and the courier's next available time plus the dropoff service time divided by 2, the travel time to the restaurant, and the pickup service time divided by 2
+        
+        if arrival_time > courier.off_time: # if the arrival time is after the courier's off duty time
+            return False # the courier cannot take the bundle
+        
+        if len(courier.assignments) > 0: # if the courier has taken at least one bundle
+            if courier.assignments[-1].isfinal_flag == 0: # if the last bundle the courier took is not final
+                if courier.assignments[-1].restaurant_id != route.restaurant_id: # if the last bundle the courier took is not from the same restaurant as the current bundle
+                    return False # the courier cannot take the bundle
+        
+        return True # otherwise the courier can take the bundle
 
     # assign a bundle to a courier
     def assign_bundle(self, t: int, courier: Courier, route: Route):
