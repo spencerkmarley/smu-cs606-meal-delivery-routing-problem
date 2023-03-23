@@ -1,0 +1,36 @@
+number of orders delivered: 688 out of 708
+total payment: 9299.00
+proportion of couriers receiving minimum guaranteed compensation: 0.51
+
+
+       click-to-door  ready-to-door  ready-to-pickup  click-to-door overage
+count         688.00         688.00           688.00                 688.00
+mean           38.23          20.08             7.23                   4.69
+std            13.69          10.63             8.08                   8.86
+min            13.00           5.00             0.00                   0.00
+10%            23.00           9.00             0.00                   0.00
+50%            36.00          18.00             5.00                   0.00
+90%            58.00          36.00            19.00                  18.00
+max           100.00          64.00            52.00                  60.00
+
+
+       orders_per_hour  bundles_per_hour  utilization  guaranteed_earnings  order_earnings  payment
+count           194.00            194.00       194.00               194.00          194.00   194.00
+mean              1.28              1.05         0.42                42.23           35.46    47.93
+std               0.77              0.60         0.24                 9.53           23.41    14.20
+min               0.00              0.00         0.00                15.00            0.00    15.00
+10%               0.00              0.00         0.00                30.00            0.00    30.00
+50%               1.33              1.23         0.47                45.00           40.00    45.00
+90%               2.33              1.67         0.69                45.00           70.00    70.00
+max               3.00              2.00         0.91                60.00          110.00   110.00
+
+
+       orders_per_bundle
+count             566.00
+mean                1.22
+std                 0.47
+min                 1.00
+10%                 1.00
+50%                 1.00
+90%                 2.00
+max                 4.00

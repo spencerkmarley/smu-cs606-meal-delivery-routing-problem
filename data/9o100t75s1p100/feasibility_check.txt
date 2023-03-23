@@ -1,0 +1,18 @@
+every order is in at most one assignment: OK
+
+assignments are never made before information is revealed: OK
+
+bundle picked up before off-time of courier: OK
+
+bundle pickup times respect ready times: OK
+
+dropoffs follow the prescribed sequence:OK
+
+continuity in sequence of origin-destination pairs: OK
+
+departures and arrival time are consistent in time: OK
+
+dropoff times and locations are consistent:OK
+
+pickup times and locations are consistent:OK
+FEASIBLE
