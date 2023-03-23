@@ -7,7 +7,7 @@ from functions.analysis import *
 
 # Import the config file
 from config import *
-f = F
+f = F_MINUTE
 delta_u = DELTA_U
 beta = BETA
 gamma = GAMMA
